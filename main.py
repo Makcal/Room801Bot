@@ -15,10 +15,13 @@ ORDER = {
     'dish':    ["Макс", "Саня", "Лев", "Даниел"],
     'cooking': ["Даниел", "Лев", "Саня", "Макс"],
 }
+
+STOVE_WASH_WEEKDAYS = [1, 5]
+
 RANDOM_DAY_COMMAND_PATTERN = re.compile(r"/\w+ (\d{1,2}\.\d{1,2}(\.\d{4})?)")
 TOMORROW_COMMAND_PATTERN = re.compile(r"/\w+ (tomorrow|завтра)")
 
-TZ = pytz.timezone('Europe/Moscow')
+TIME_ZONE = pytz.timezone('Europe/Moscow')
 
 
 @bot.message_handler(commands=['dish'])
@@ -33,16 +36,19 @@ def cooking(message: telebot.types.Message):
 
 def who(message: telebot.types.Message, action: str, order_key: str):
     if re.match(TOMORROW_COMMAND_PATTERN, message.text):
-        day = datetime.datetime.now(TZ) + datetime.timedelta(days=1)
-        bot.reply_to(message, f"{ORDER[order_key][(day - FIRST_DAY).days % 4]} {action} tomorrow.")
+        day = datetime.datetime.now(TIME_ZONE) + datetime.timedelta(days=1)
+        message_to_send = f"{ORDER[order_key][(day - FIRST_DAY).days % 4]} {action} tomorrow."
+        if day.weekday() in STOVE_WASH_WEEKDAYS:
+            message_to_send += "And also he has to wash the stove"
+        bot.reply_to(message, message_to_send)
 
     elif (m := re.match(RANDOM_DAY_COMMAND_PATTERN, message.text)) is not None:
         m: re.Match
         if message.text.count('.') == 1:
-            message.text += f'.{datetime.datetime.now(TZ).year}'
+            message.text += f'.{datetime.datetime.now(TIME_ZONE).year}'
         try:
             m = re.match(RANDOM_DAY_COMMAND_PATTERN, message.text)
-            day = datetime.datetime.strptime(m.group(1), r"%d.%m.%Y").astimezone(TZ)
+            day = datetime.datetime.strptime(m.group(1), r"%d.%m.%Y").astimezone(TIME_ZONE)
         except ValueError:
             bot.reply_to(message, "Invalid date")
         else:
@@ -50,7 +56,7 @@ def who(message: telebot.types.Message, action: str, order_key: str):
             bot.reply_to(message, f"{ORDER[order_key][(day - FIRST_DAY).days % 4]} {action} that day.")
 
     else:
-        day = datetime.datetime.now(TZ)
+        day = datetime.datetime.now(TIME_ZONE)
         bot.reply_to(message, f"{ORDER[order_key][(day - FIRST_DAY).days % 4]} {action} today.")
 
 
