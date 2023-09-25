@@ -40,7 +40,7 @@ def who(message: telebot.types.Message, action: str, order_key: str):
         message_to_send = f"{ORDER[order_key][(day - FIRST_DAY).days % 4]} {action} tomorrow."
         if day.weekday() in STOVE_WASH_WEEKDAYS:
             message_to_send += "And also he has to wash the stove"
-        bot.send_message(message.chat.id, message_to_send)
+        bot.reply_to(message, message_to_send)
 
     elif (m := re.match(RANDOM_DAY_COMMAND_PATTERN, message.text)) is not None:
         m: re.Match
@@ -50,14 +50,14 @@ def who(message: telebot.types.Message, action: str, order_key: str):
             m = re.match(RANDOM_DAY_COMMAND_PATTERN, message.text)
             day = datetime.datetime.strptime(m.group(1), r"%d.%m.%Y").astimezone(TIME_ZONE)
         except ValueError:
-            bot.send_message(message.chat.id, "Invalid date")
+            bot.reply_to(message, "Invalid date")
         else:
             day += datetime.timedelta(hours=12)
-            bot.send_message(message.chat.id, f"{ORDER[order_key][(day - FIRST_DAY).days % 4]} {action} that day.")
+            bot.reply_to(message, f"{ORDER[order_key][(day - FIRST_DAY).days % 4]} {action} that day.")
 
     else:
         day = datetime.datetime.now(TIME_ZONE)
-        bot.send_message(message.chat.id, f"{ORDER[order_key][(day - FIRST_DAY).days % 4]} {action} today.")
+        bot.reply_to(message, f"{ORDER[order_key][(day - FIRST_DAY).days % 4]} {action} today.")
 
 
 bot.infinity_polling()
